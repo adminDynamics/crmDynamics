@@ -13,7 +13,7 @@ const nextConfig = {
     return [
       {
         source: '/api/obtenerMensaje',
-        destination: 'http://localhost:3001/obtenerMensaje',
+        destination: 'http://localhost:3001/api/obtenerMensaje',
       },
     ]
   },
