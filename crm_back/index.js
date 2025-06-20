@@ -2,6 +2,8 @@ require('dotenv').config()
 const axios = require('axios')
 const express = require('express')
 const cors = require('cors')
+const http = require('http');
+const { Server } = require('socket.io');
 // const client = require('twilio')(process.env.SID, process.env.TOKEN)
 // const MessagingResponse = require('twilio').twiml.MessagingResponse;
 
@@ -35,24 +37,34 @@ app.get('/api/obtenerMensaje', (req, res) => {
     }
 });
 
-/* Código anterior comentado
-app.post('/sendMessage', (req, res) => {
-    client.messages.create({
-        body: 'Soy el pai desde twillio',
-        from: 'whatsapp:+14155238886',
-        to: 'whatsapp:+5491123893657'
-    }).then(message => res.send(message));
-})
+const server = http.createServer(app);
+const io = new Server(server, {
+    cors: {
+        origin: '*',
+        methods: ['GET', 'POST']
+    }
+});
 
-app.post('/resiveMessage', async (req, res) => {
-    console.log(res.body);
-})
+io.on('connection', (socket) => {
+    console.log('Cliente conectado por WebSocket');
 
-app.post('/resiveMessageStatus', async (req, res) => {
-    console.log(res.body);
-})
-*/
+    // Enviar el último mensaje al conectar
+    if (ultimoMensaje) {
+        socket.emit('mensaje', ultimoMensaje);
+    }
 
-app.listen(port, () => {
-    console.log(`Servidor escuchando en el puerto ${port}`)
-}) 
+    // Recibir mensajes desde el cliente
+    socket.on('mensaje', (data) => {
+        ultimoMensaje = data;
+        // Reenviar a todos los clientes conectados
+        io.emit('mensaje', data);
+    });
+
+    socket.on('disconnect', () => {
+        console.log('Cliente desconectado');
+    });
+});
+
+server.listen(port, () => {
+    console.log(`Servidor escuchando en el puerto ${port} (HTTP y WebSocket)`);
+}); 
