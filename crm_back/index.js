@@ -1,43 +1,45 @@
 require('dotenv').config()
-const axios = require('axios')
 const express = require('express')
 const cors = require('cors')
 const http = require('http');
 const { Server } = require('socket.io');
-// const client = require('twilio')(process.env.SID, process.env.TOKEN)
-// const MessagingResponse = require('twilio').twiml.MessagingResponse;
 
 const app = express()
 const port = process.env.PORT || 3001
 
-// Variable global para almacenar el último mensaje recibido
 let ultimoMensaje = null;
 
-// Middleware para parsear JSON y habilitar CORS
+// Middleware
 app.use(express.json());
 app.use(cors());
 
-// Endpoint para recibir el mensaje desde Botpress
+// Validar y registrar los mensajes recibidos
 app.post('/api/recibirMensaje', (req, res) => {
-    try {
-        const mensaje = req.body;
-        ultimoMensaje = mensaje;
+    const { tipo, mensaje, userId, conversationId, timestamp } = req.body;
 
-        // Emitir mensaje a todos los sockets conectados
-        io.emit('mensaje', mensaje);
-
-        res.status(200).json({ success: true, message: 'Mensaje enviado por WebSocket' });
-    } catch (error) {
-        res.status(500).json({ success: false, message: 'Error al procesar el mensaje' });
+    // ✅ Validaciones mínimas
+    if (!tipo || !mensaje || !userId) {
+        console.warn('❌ Mensaje recibido incompleto:', req.body);
+        return res.status(400).json({ success: false, message: 'Faltan datos requeridos: tipo, mensaje o userId' });
     }
+
+    const nuevoMensaje = { tipo, mensaje, userId, conversationId, timestamp: timestamp || new Date().toISOString() };
+
+    // ✅ Guardar último mensaje y emitirlo
+    ultimoMensaje = nuevoMensaje;
+    console.log('✅ Mensaje recibido y emitido:', nuevoMensaje);
+    io.emit('mensaje', nuevoMensaje);
+
+    return res.status(200).json({ success: true, message: 'Mensaje procesado correctamente' });
 });
 
-// Endpoint para obtener el último mensaje
+// Endpoint para ver el último mensaje (opcional)
 app.get('/api/obtenerMensaje', (req, res) => {
     if (ultimoMensaje) {
-        res.status(200).json(ultimoMensaje);
+        console.log('📤 Último mensaje entregado vía GET');
+        return res.status(200).json(ultimoMensaje);
     } else {
-        res.status(404).json({ success: false, message: 'No hay mensajes almacenados' });
+        return res.status(404).json({ success: false, message: 'No hay mensajes almacenados' });
     }
 });
 
@@ -50,25 +52,24 @@ const io = new Server(server, {
 });
 
 io.on('connection', (socket) => {
-    console.log('Cliente conectado por WebSocket');
+    console.log('🔌 Cliente WebSocket conectado');
 
-    // Enviar el último mensaje al conectar
     if (ultimoMensaje) {
         socket.emit('mensaje', ultimoMensaje);
+        console.log('📤 Último mensaje reenviado al nuevo cliente');
     }
 
-    // Recibir mensajes desde el cliente
     socket.on('mensaje', (data) => {
         ultimoMensaje = data;
-        // Reenviar a todos los clientes conectados
         io.emit('mensaje', data);
+        console.log('📥 Mensaje recibido desde el cliente y emitido:', data);
     });
 
     socket.on('disconnect', () => {
-        console.log('Cliente desconectado');
+        console.log('🔌 Cliente WebSocket desconectado');
     });
 });
 
 server.listen(port, () => {
-    console.log(`Servidor escuchando en el puerto ${port} (HTTP y WebSocket)`);
-}); 
+    console.log(`🚀 Servidor corriendo en el puerto ${port} (HTTP y WebSocket)`);
+});
