@@ -9,7 +9,6 @@ const port = process.env.PORT || 3001
 
 let ultimoMensaje = null;
 
-// Middleware
 app.use(express.json());
 app.use(cors());
 
@@ -17,15 +16,19 @@ app.use(cors());
 app.post('/api/recibirMensaje', (req, res) => {
     const { tipo, mensaje, userId, conversationId, timestamp } = req.body;
 
-    // ✅ Validaciones mínimas
     if (!tipo || !mensaje || !userId) {
         console.warn('❌ Mensaje recibido incompleto:', req.body);
         return res.status(400).json({ success: false, message: 'Faltan datos requeridos: tipo, mensaje o userId' });
     }
 
-    const nuevoMensaje = { tipo, mensaje, userId, conversationId, timestamp: timestamp || new Date().toISOString() };
+    const nuevoMensaje = {
+        tipo,
+        mensaje,
+        userId,
+        conversationId,
+        timestamp: timestamp || new Date().toISOString()
+    };
 
-    // ✅ Guardar último mensaje y emitirlo
     ultimoMensaje = nuevoMensaje;
     console.log('✅ Mensaje recibido y emitido:', nuevoMensaje);
     io.emit('mensaje', nuevoMensaje);
@@ -33,7 +36,7 @@ app.post('/api/recibirMensaje', (req, res) => {
     return res.status(200).json({ success: true, message: 'Mensaje procesado correctamente' });
 });
 
-// Endpoint para ver el último mensaje (opcional)
+// Ver el último mensaje (opcional)
 app.get('/api/obtenerMensaje', (req, res) => {
     if (ultimoMensaje) {
         console.log('📤 Último mensaje entregado vía GET');
@@ -54,10 +57,8 @@ const io = new Server(server, {
 io.on('connection', (socket) => {
     console.log('🔌 Cliente WebSocket conectado');
 
-    if (ultimoMensaje) {
-        socket.emit('mensaje', ultimoMensaje);
-        console.log('📤 Último mensaje reenviado al nuevo cliente');
-    }
+    // ❌ Eliminado: reenvío automático del último mensaje
+    // Esto evitaba confusión con mensajes viejos al entrar al CRM
 
     socket.on('mensaje', (data) => {
         ultimoMensaje = data;
