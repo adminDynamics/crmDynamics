@@ -17,12 +17,16 @@ let ultimoMensaje = null;
 app.use(express.json());
 app.use(cors());
 
-// Endpoint para recibir el mensaje
+// Endpoint para recibir el mensaje desde Botpress
 app.post('/api/recibirMensaje', (req, res) => {
     try {
         const mensaje = req.body;
         ultimoMensaje = mensaje;
-        res.status(200).json({ success: true, message: 'Mensaje almacenado correctamente' });
+
+        // Emitir mensaje a todos los sockets conectados
+        io.emit('mensaje', mensaje);
+
+        res.status(200).json({ success: true, message: 'Mensaje enviado por WebSocket' });
     } catch (error) {
         res.status(500).json({ success: false, message: 'Error al procesar el mensaje' });
     }
