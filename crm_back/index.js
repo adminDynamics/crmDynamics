@@ -15,20 +15,20 @@ app.use(cors());
 
 // Validar y registrar los mensajes recibidos
 app.post('/api/recibirMensaje', (req, res) => {
-    const { tipo, mensaje, userId, conversationId, timestamp } = req.body;
+    const { tipo, mensaje, userId, conversationId, chatId, timestamp } = req.body;
 
-    if (!tipo || !mensaje || !userId) {
-        console.warn('❌ Mensaje recibido incompleto:', req.body);
-        return res.status(400).json({ success: false, message: 'Faltan datos requeridos: tipo, mensaje o userId' });
-    }
-
-    const nuevoMensaje = {
-        tipo,
-        mensaje,
-        userId,
-        conversationId,
-        timestamp: timestamp || new Date().toISOString()
-    };
+if (!tipo || !mensaje || !userId || !chatId) {
+    console.warn('❌ Mensaje recibido incompleto:', req.body);
+    return res.status(400).json({ success: false, message: 'Faltan datos requeridos: tipo, mensaje, userId o chatId' });
+}
+const nuevoMensaje = {
+    tipo,
+    mensaje,
+    userId,
+    conversationId,
+    chatId,
+    timestamp: timestamp || new Date().toISOString()
+  };
 
     ultimoMensaje = nuevoMensaje;
     console.log('✅ Mensaje recibido y emitido:', nuevoMensaje);
