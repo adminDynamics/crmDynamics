@@ -41,10 +41,10 @@ app.post('/api/recibirMensaje', async (req, res) => {
 
   const nuevoMensaje = {
     tipo,
-    mensaje,
-    userId,
-    conversationId,
-    chatId,
+    message: mensaje,
+    user_id: userId,
+    conversation_id: conversationId || null,
+    chat_id: chatId,
     timestamp: timestamp || new Date().toISOString(),
   };
 
