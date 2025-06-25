@@ -7,7 +7,6 @@ const { createClient } = require('@supabase/supabase-js');
 
 const app = express();
 const port = process.env.PORT || 3001;
-
 const telegramToken = process.env.TELEGRAM_BOT_TOKEN;
 
 // Supabase
@@ -25,38 +24,56 @@ app.use(cors());
 app.post('/api/recibirMensaje', async (req, res) => {
   const { tipo, mensaje, userId, conversationId, chatId, timestamp } = req.body;
 
-  if (!tipo || !mensaje || !userId || !chatId) {
+  if (!tipo || !mensaje || !userId || !chatId || !conversationId) {
     console.warn('❌ Mensaje recibido incompleto:', req.body);
     return res.status(400).json({
       success: false,
-      message: 'Faltan datos requeridos: tipo, mensaje, userId o chatId',
+      message: 'Faltan datos requeridos: tipo, mensaje, userId, chatId o conversationId',
     });
   }
 
+  const cleanConversationId = conversationId.replace('conv_', '');
+
+  // Verificar si existe la conversación
+  const { data: existingConv, error: checkError } = await supabase
+    .from('conversations')
+    .select('id')
+    .eq('id', cleanConversationId)
+    .single();
+
+  if (!existingConv) {
+    const { error: insertConvError } = await supabase
+      .from('conversations')
+      .insert([{ id: cleanConversationId }]);
+
+    if (insertConvError) {
+      console.error('❌ No se pudo crear la conversación:', insertConvError);
+    } else {
+      console.log('🆕 Conversación creada en Supabase');
+    }
+  }
+
   const nuevoMensaje = {
-    tipo,
-    mensaje,
-    userId,
-    conversationId,
-    chatId,
+    conversation_id: cleanConversationId,
+    sender: tipo,
+    message: mensaje,
     timestamp: timestamp || new Date().toISOString(),
   };
 
   ultimoMensaje = nuevoMensaje;
-  console.log('✅ Mensaje recibido y emitido:', nuevoMensaje);
-  io.emit('mensaje', nuevoMensaje);
+  console.log('✅ Mensaje recibido y emitido:', req.body);
+  io.emit('mensaje', req.body);
 
-  // Almacenar en Supabase
   try {
     const { data, error } = await supabase.from('messages').insert([nuevoMensaje]);
-  
+
     if (error) {
-        console.error('❌ Error guardando en Supabase:', {
-          message: error.message,
-          details: error.details,
-          hint: error.hint
-        });
-      } else {
+      console.error('❌ Error guardando en Supabase:', {
+        message: error.message,
+        details: error.details,
+        hint: error.hint
+      });
+    } else {
       console.log('🗃️ Mensaje guardado en Supabase:', data);
     }
   } catch (err) {
@@ -66,7 +83,7 @@ app.post('/api/recibirMensaje', async (req, res) => {
   return res.status(200).json({ success: true, message: 'Mensaje procesado correctamente' });
 });
 
-// Responder via api telegram.
+// Responder via api telegram
 app.post('/api/responderTelegram', async (req, res) => {
   const { chatId, mensaje } = req.body;
 
