@@ -48,14 +48,15 @@ app.post('/api/recibirMensaje', async (req, res) => {
 
   // Almacenar en Supabase
   try {
-    const { error } = await supabase.from('messages').insert([nuevoMensaje]);
+    const { data, error } = await supabase.from('messages').insert([nuevoMensaje]);
+  
     if (error) {
-      console.error('❌ Error guardando en Supabase:', error);
+      console.error('❌ Error guardando en Supabase:', error.message || error);
     } else {
-      console.log('🗃️ Mensaje guardado en Supabase');
+      console.log('🗃️ Mensaje guardado en Supabase:', data);
     }
   } catch (err) {
-    console.error('❌ Error inesperado al guardar en Supabase:', err);
+    console.error('❌ Error inesperado al guardar en Supabase:', err.message || err);
   }
 
   return res.status(200).json({ success: true, message: 'Mensaje procesado correctamente' });
