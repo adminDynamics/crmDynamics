@@ -51,18 +51,19 @@ app.post('/api/recibirMensaje', async (req, res) => {
   ultimoMensaje = nuevoMensaje;
   console.log('✅ Mensaje recibido y emitido:', nuevoMensaje);
   io.emit('mensaje', nuevoMensaje);
-
+  console.log('📦 Insertando en Supabase:', nuevoMensaje);
   try {
     const { data, error } = await supabase.from('messages').insert([nuevoMensaje]);
-    if (error) {
-      console.error('❌ Error guardando en Supabase:', {
-        message: error.message,
-        details: error.details,
-        hint: error.hint
-      });
-    } else {
-      console.log('🗃️ Mensaje guardado en Supabase:', data);
-    }
+if (error) {
+  console.error('❌ Error guardando en Supabase:', {
+    message: error.message,
+    code: error.code,
+    details: error.details,
+    hint: error.hint,
+  });
+} else {
+  console.log('🗃️ Mensaje guardado en Supabase:', data);
+}
   } catch (err) {
     console.error('❌ Error inesperado al guardar en Supabase:', err.message || err);
   }
