@@ -9,7 +9,7 @@ const app = express();
 const port = process.env.PORT || 3001;
 const telegramToken = process.env.TELEGRAM_BOT_TOKEN;
 
-// Supabase
+// Supabase client
 const supabase = createClient(
   process.env.SUPABASE_URL,
   process.env.SUPABASE_SERVICE_ROLE_KEY
@@ -20,53 +20,40 @@ let ultimoMensaje = null;
 app.use(express.json());
 app.use(cors());
 
-// Validar y registrar los mensajes recibidos
-app.post('/api/recibirMensaje', async (req, res) => {
-  const { tipo, mensaje, userId, conversationId, chatId, timestamp } = req.body;
+// 🔁 Remueve 'conv_' si está presente
+function limpiarConversationId(id) {
+  return id?.startsWith('conv_') ? id.slice(5) : id;
+}
 
-  if (!tipo || !mensaje || !userId || !chatId || !conversationId) {
-    console.warn('❌ Mensaje recibido incompleto:', req.body);
+// Recibir mensaje
+app.post('/api/recibirMensaje', async (req, res) => {
+  let { tipo, mensaje, userId, conversationId, chatId, timestamp } = req.body;
+
+  if (!tipo || !mensaje || !userId || !chatId) {
+    console.warn('❌ Mensaje incompleto:', req.body);
     return res.status(400).json({
       success: false,
-      message: 'Faltan datos requeridos: tipo, mensaje, userId, chatId o conversationId',
+      message: 'Faltan datos: tipo, mensaje, userId o chatId',
     });
   }
 
-  const cleanConversationId = conversationId.replace('conv_', '');
-
-  // Verificar si existe la conversación
-  const { data: existingConv, error: checkError } = await supabase
-    .from('conversations')
-    .select('id')
-    .eq('id', cleanConversationId)
-    .single();
-
-  if (!existingConv) {
-    const { error: insertConvError } = await supabase
-      .from('conversations')
-      .insert([{ id: cleanConversationId }]);
-
-    if (insertConvError) {
-      console.error('❌ No se pudo crear la conversación:', insertConvError);
-    } else {
-      console.log('🆕 Conversación creada en Supabase');
-    }
-  }
+  conversationId = limpiarConversationId(conversationId);
 
   const nuevoMensaje = {
-    conversation_id: cleanConversationId,
-    sender: tipo,
-    message: mensaje,
+    tipo,
+    mensaje,
+    userId,
+    conversationId,
+    chatId,
     timestamp: timestamp || new Date().toISOString(),
   };
 
   ultimoMensaje = nuevoMensaje;
-  console.log('✅ Mensaje recibido y emitido:', req.body);
-  io.emit('mensaje', req.body);
+  console.log('✅ Mensaje recibido y emitido:', nuevoMensaje);
+  io.emit('mensaje', nuevoMensaje);
 
   try {
     const { data, error } = await supabase.from('messages').insert([nuevoMensaje]);
-
     if (error) {
       console.error('❌ Error guardando en Supabase:', {
         message: error.message,
@@ -83,7 +70,7 @@ app.post('/api/recibirMensaje', async (req, res) => {
   return res.status(200).json({ success: true, message: 'Mensaje procesado correctamente' });
 });
 
-// Responder via api telegram
+// Responder por Telegram
 app.post('/api/responderTelegram', async (req, res) => {
   const { chatId, mensaje } = req.body;
 
@@ -111,16 +98,17 @@ app.post('/api/responderTelegram', async (req, res) => {
   }
 });
 
-// Ver el último mensaje (opcional)
+// Último mensaje
 app.get('/api/obtenerMensaje', (req, res) => {
   if (ultimoMensaje) {
-    console.log('📤 Último mensaje entregado vía GET');
+    console.log('📤 Último mensaje entregado');
     return res.status(200).json(ultimoMensaje);
   } else {
     return res.status(404).json({ success: false, message: 'No hay mensajes almacenados' });
   }
 });
 
+// WebSocket
 const server = http.createServer(app);
 const io = new Server(server, {
   cors: {
@@ -135,7 +123,7 @@ io.on('connection', (socket) => {
   socket.on('mensaje', (data) => {
     ultimoMensaje = data;
     io.emit('mensaje', data);
-    console.log('📥 Mensaje recibido desde el cliente y emitido:', data);
+    console.log('📥 Mensaje emitido desde cliente:', data);
   });
 
   socket.on('disconnect', () => {
@@ -144,5 +132,5 @@ io.on('connection', (socket) => {
 });
 
 server.listen(port, () => {
-  console.log(`🚀 Servidor corriendo en el puerto ${port} (HTTP y WebSocket)`);
+  console.log(`🚀 Servidor corriendo en el puerto ${port}`);
 });
