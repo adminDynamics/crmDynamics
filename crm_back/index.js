@@ -45,7 +45,7 @@ app.post('/api/recibirMensaje', async (req, res) => {
     user_id: userId,
     conversation_id: conversationId || null,
     chat_id: chatId,
-    timestamp: timestamp || new Date().toISOString(),
+    timestamp: timestamp ? new Date(timestamp) : new Date()
   };
 
   ultimoMensaje = nuevoMensaje;
