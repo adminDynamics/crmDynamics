@@ -50,6 +50,7 @@ app.post('/api/recibirMensaje', async (req, res) => {
 
   ultimoMensaje = nuevoMensaje;
 
+  console.log('🟢 Enviando por WebSocket:', JSON.stringify(nuevoMensaje, null, 2));
   io.emit('mensaje', nuevoMensaje);
 
   try {
