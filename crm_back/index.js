@@ -28,6 +28,7 @@ function limpiarConversationId(id) {
 // Recibir mensaje
 app.post('/api/recibirMensaje', async (req, res) => {
   let { tipo, mensaje, userId, conversationId, chatId, timestamp } = req.body;
+  console.log('****************************Recibido mensaje:', req.body);
 
   if (!tipo || !mensaje || !userId || !chatId) {
     console.warn('❌ Mensaje incompleto:', req.body);
@@ -52,18 +53,19 @@ app.post('/api/recibirMensaje', async (req, res) => {
   console.log('✅ Mensaje recibido y emitido:', nuevoMensaje);
   io.emit('mensaje', nuevoMensaje);
   console.log('📦 Insertando en Supabase:', nuevoMensaje);
+
   try {
     const { data, error } = await supabase.from('messages').insert([nuevoMensaje]);
-if (error) {
-  console.error('❌ Error guardando en Supabase:', {
-    message: error.message,
-    code: error.code,
-    details: error.details,
-    hint: error.hint,
-  });
-} else {
-  console.log('🗃️ Mensaje guardado en Supabase:', data);
-}
+    if (error) {
+      console.error('❌ Error guardando en Supabase:', {
+        message: error.message,
+        code: error.code,
+        details: error.details,
+        hint: error.hint,
+      });
+    } else {
+      console.log('🗃️ Mensaje guardado en Supabase:', data);
+    }
   } catch (err) {
     console.error('❌ Error inesperado al guardar en Supabase:', err.message || err);
   }
@@ -134,4 +136,27 @@ io.on('connection', (socket) => {
 
 server.listen(port, () => {
   console.log(`🚀 Servidor corriendo en el puerto ${port}`);
+});
+
+//PRUEBA SUPABASE
+app.post('/mensajes', async (req, res) => {
+  const { conversation_id, message, timestamp, user_id, chat_id } = req.body;
+
+  // Validación básica
+  if (!conversation_id || !message || !timestamp || !user_id || !chat_id) {
+    return res.status(400).json({ error: 'Faltan datos obligatorios' });
+  }
+
+  const { data, error } = await supabase
+    .from('mensajes')
+    .insert([
+      { conversation_id, message, timestamp, user_id, chat_id }
+    ]);
+
+  if (error) {
+    console.error('Error al insertar mensaje:', error.message);
+    return res.status(500).json({ error: error.message });
+  }
+
+  res.status(201).json({ success: true, mensajeInsertado: data[0] });
 });
