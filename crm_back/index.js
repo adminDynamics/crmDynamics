@@ -31,7 +31,6 @@ app.post('/api/recibirMensaje', async (req, res) => {
   console.log('****************************Recibido mensaje:', req.body);
 
   if (!tipo || !mensaje || !userId || !chatId) {
-    console.warn('❌ Mensaje incompleto:', req.body);
     return res.status(400).json({
       success: false,
       message: 'Faltan datos: tipo, mensaje, userId o chatId',
@@ -50,22 +49,11 @@ app.post('/api/recibirMensaje', async (req, res) => {
   };
 
   ultimoMensaje = nuevoMensaje;
-  console.log('✅ Mensaje recibido y emitido:', nuevoMensaje);
+
   io.emit('mensaje', nuevoMensaje);
-  console.log('📦 Insertando en Supabase:', nuevoMensaje);
 
   try {
     const { data, error } = await supabase.from('messages').insert([nuevoMensaje]);
-    if (error) {
-      console.error('❌ Error guardando en Supabase:', {
-        message: error.message,
-        code: error.code,
-        details: error.details,
-        hint: error.hint,
-      });
-    } else {
-      console.log('🗃️ Mensaje guardado en Supabase:', data);
-    }
   } catch (err) {
     console.error('❌ Error inesperado al guardar en Supabase:', err.message || err);
   }
@@ -104,7 +92,7 @@ app.post('/api/responderTelegram', async (req, res) => {
 // Último mensaje
 app.get('/api/obtenerMensaje', (req, res) => {
   if (ultimoMensaje) {
-    console.log('📤 Último mensaje entregado');
+    console.log('Último mensaje entregado');
     return res.status(200).json(ultimoMensaje);
   } else {
     return res.status(404).json({ success: false, message: 'No hay mensajes almacenados' });
@@ -126,7 +114,6 @@ io.on('connection', (socket) => {
   socket.on('mensaje', (data) => {
     ultimoMensaje = data;
     io.emit('mensaje', data);
-    console.log('📥 Mensaje emitido desde cliente:', data);
   });
 
   socket.on('disconnect', () => {
