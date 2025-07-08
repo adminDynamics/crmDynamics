@@ -63,16 +63,23 @@ app.post('/api/recibirMensaje', async (req, res) => {
 
   try {
     const { data, error } = await supabase.from('messages').insert([nuevoMensaje]);
+  
     if (error) {
-      console.error('❌ Error al guardar en Supabase:', error.message || error);
-      return res.status(500).json({ success: false, message: 'Error al guardar en la base de datos', error: error.message });
+      console.error('❌ Error al guardar en Supabase:', JSON.stringify(error, null, 2));
+      return res.status(500).json({
+        success: false,
+        message: 'Error al guardar en la base de datos',
+        error
+      });
     }
   } catch (err) {
     console.error('❌ Error inesperado al guardar en Supabase:', err.message || err);
-    return res.status(500).json({ success: false, message: 'Error inesperado al guardar en la base de datos', error: err.message });
+    return res.status(500).json({
+      success: false,
+      message: 'Error inesperado al guardar en la base de datos',
+      error: err.message
+    });
   }
-
-  return res.status(200).json({ success: true, message: 'Mensaje procesado correctamente' });
 });
 
 // Responder por Telegram
