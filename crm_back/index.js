@@ -82,15 +82,18 @@ app.post('/api/recibirMensaje', async (req, res) => {
   }
 });
 
-// Responder por Telegram
 app.post('/api/responderTelegram', async (req, res) => {
-  const { chatId, mensaje } = req.body;
+  const { chatId, mensaje, userId, conversationId } = req.body;
 
-  if (!chatId || !mensaje) {
-    return res.status(400).json({ success: false, message: 'Faltan datos: chatId o mensaje' });
+  if (!chatId || !mensaje || !userId || !conversationId) {
+    return res.status(400).json({
+      success: false,
+      message: 'Faltan datos: chatId, mensaje, userId o conversationId'
+    });
   }
 
   try {
+    // Enviar mensaje a Telegram
     const response = await fetch(`https://api.telegram.org/bot${telegramToken}/sendMessage`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -99,11 +102,30 @@ app.post('/api/responderTelegram', async (req, res) => {
 
     const data = await response.json();
 
-    if (data.ok) {
-      return res.status(200).json({ success: true, message: 'Mensaje enviado correctamente' });
-    } else {
+    if (!data.ok) {
       return res.status(500).json({ success: false, error: data });
     }
+
+    // Guardar el mensaje en Supabase como operador
+    const nuevoMensaje = {
+      tipo: 'operador',
+      message: mensaje,
+      user_id: userId,
+      conversation_id: conversationId,
+      chat_id: chatId,
+      timestamp: new Date()
+    };
+
+    const { error } = await supabase.from('messages').insert([nuevoMensaje]);
+    if (error) {
+      console.error('❌ Error al guardar en Supabase:', error.message || error);
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: 'Mensaje enviado y guardado correctamente'
+    });
+
   } catch (error) {
     console.error('❌ Error enviando mensaje a Telegram:', error);
     return res.status(500).json({ success: false, error: error.message });
