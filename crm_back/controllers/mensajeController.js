@@ -25,7 +25,9 @@ const recibirMensaje = (io) => async (req, res) => {
   };
 
   ultimoMensaje = nuevoMensaje;
+  console.log('Enviando mensaje por WebSocket:', JSON.stringify(nuevoMensaje, null, 2));
   io.emit('mensaje', nuevoMensaje);
+  
 
   try {
     await supabase.from('messages').insert([nuevoMensaje]);
