@@ -38,11 +38,28 @@ const recibirMensaje = (io) => async (req, res) => {
   res.status(200).json({ success: true, message: 'Mensaje procesado correctamente' });
 };
 
-const obtenerUltimoMensaje = (req, res) => {
+const obtenerUltimoMensaje = async (req, res) => {
   if (ultimoMensaje) {
     return res.status(200).json(ultimoMensaje);
   } else {
-    return res.status(404).json({ success: false, message: 'No hay mensajes almacenados' });
+    // Buscar el último mensaje en la base de datos
+    try {
+      const { data, error } = await supabase
+        .from('messages')
+        .select('*')
+        .order('timestamp', { ascending: false })
+        .limit(1);
+      if (error) {
+        return res.status(500).json({ success: false, message: 'Error al consultar la base de datos', error: error.message });
+      }
+      if (data && data.length > 0) {
+        return res.status(200).json(data[0]);
+      } else {
+        return res.status(404).json({ success: false, message: 'No hay mensajes almacenados' });
+      }
+    } catch (err) {
+      return res.status(500).json({ success: false, message: 'Error inesperado', error: err.message });
+    }
   }
 };
 
