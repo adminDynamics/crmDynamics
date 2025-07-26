@@ -1,6 +1,7 @@
 {
   "name": "crm-backend",
   "version": "1.0.0",
+  "type": "module", 
   "description": "Backend para manejar mensajes y almacenarlos en Supabase",
   "main": "index.js",
   "scripts": {

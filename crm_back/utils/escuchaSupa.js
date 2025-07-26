@@ -1,4 +1,4 @@
-import supabase from './supabaseClient.js'
+import supabase from './config/supabaseClient.js'
 import { insertarCliente, actualizarCliente } from './userTableController.js'
 
 const channel = supabase

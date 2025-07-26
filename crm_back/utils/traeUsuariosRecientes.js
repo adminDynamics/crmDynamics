@@ -1,4 +1,4 @@
-import supabase from './supabaseClient.js'
+import supabase from './config/supabaseClient.js'
 
 // Obtener datos desde Supabase
 const obtenerUsuariosRecientes = async () => {
