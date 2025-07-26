@@ -1,4 +1,4 @@
-import supabase from './config/supabaseClient.js'
+import supabase from '../config/supabaseClient.js'
 import clientbp from './bpClient.js'
 import { obtenerUsuariosRecientes,exportarCSV } from '../utils/traeUsuariosRecientes.js'
 import fs from 'fs'
