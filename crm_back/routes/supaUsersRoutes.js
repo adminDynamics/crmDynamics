@@ -1,4 +1,9 @@
-app.post('/webhook/supabase-usuarios', async (req, res) => {
+const express = require('express');
+const { insertarCliente, actualizarCliente } = require('../controllers/userTableController.js');
+
+const router = express.Router();
+
+router.post('/webhook/supabase-usuarios', async (req, res) => {
   const payload = req.body
 
   console.log('📨 Webhook recibido:', JSON.stringify(payload, null, 2))
@@ -22,3 +27,5 @@ app.post('/webhook/supabase-usuarios', async (req, res) => {
     res.status(500).send('Error al actualizar cliente')
   }
 })
+
+module.exports = router;

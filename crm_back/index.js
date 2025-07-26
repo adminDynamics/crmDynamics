@@ -3,12 +3,13 @@ const express = require('express');
 const cors = require('cors');
 const http = require('http');
 const { Server } = require('socket.io');
-import cron from 'node-cron'
-import { reemplazarTabla } from './controllers/userTableController.js'
-import './utils/escuchaSupa.js'
+const cron = require('node-cron');
+const { reemplazarTabla } = require('./controllers/userTableController.js');
+require('./utils/escuchaSupa.js');
 
 const mensajeRoutes = require('./routes/mensajeRoutes');
 const telegramRoutes = require('./routes/telegramRoutes');
+const supaUsersRoutes = require('./routes/supaUsersRoutes');
 
 const app = express();
 const port = process.env.PORT || 3001;
@@ -41,6 +42,7 @@ require('./sockets/socketHandler')(io);
 // Rutas
 app.use(mensajeRoutes(io));
 app.use(telegramRoutes);
+app.use(supaUsersRoutes);
 
 // Iniciar servidor
 server.listen(port, () => {
