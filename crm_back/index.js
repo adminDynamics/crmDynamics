@@ -5,7 +5,7 @@ const http = require('http');
 const { Server } = require('socket.io');
 import cron from 'node-cron'
 import { reemplazarTabla } from './controllers/userTableController.js'
-import './utils/realtimeListener.js'
+import './utils/escuchaSupa.js'
 
 const mensajeRoutes = require('./routes/mensajeRoutes');
 const telegramRoutes = require('./routes/telegramRoutes');
