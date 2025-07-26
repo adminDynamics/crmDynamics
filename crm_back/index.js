@@ -1,30 +1,31 @@
-require('dotenv').config();
-const express = require('express');
-const cors = require('cors');
-const http = require('http');
-const { Server } = require('socket.io');
-const cron = require('node-cron');
-const { reemplazarTabla } = require('./controllers/userTableController.js');
-require('./utils/escuchaSupa.js');
+import dotenv from 'dotenv';
+import express from 'express';
+import cors from 'cors';
+import http from 'http';
+import { Server } from 'socket.io';
+import cron from 'node-cron';
+import { reemplazarTabla } from './controllers/userTableController.js';
+import './utils/escuchaSupa.js';
 
-const mensajeRoutes = require('./routes/mensajeRoutes');
-const telegramRoutes = require('./routes/telegramRoutes');
-const supaUsersRoutes = require('./routes/supaUsersRoutes');
+import mensajeRoutes from './routes/mensajeRoutes.js';
+import telegramRoutes from './routes/telegramRoutes.js';
+import supaUsersRoutes from './routes/supaUsersRoutes.js';
+
+dotenv.config();
 
 const app = express();
 const port = process.env.PORT || 3001;
 
-
 //Ejecutar todos los días a las 2:00 AM.
 cron.schedule('0 2 * * *', async () => {
-  console.log('🕑 Iniciando sincronización con Botpress...')
+  console.log('🕑 Iniciando sincronización con Botpress...');
   try {
-    await reemplazarTabla()
-    console.log('✅ Sincronización completada exitosamente')
+    await reemplazarTabla();
+    console.log('✅ Sincronización completada exitosamente');
   } catch (err) {
-    console.error('❌ Error durante la sincronización:', err)
+    console.error('❌ Error durante la sincronización:', err);
   }
-})
+});
 
 app.use(express.json());
 app.use(cors());
@@ -37,7 +38,7 @@ const io = new Server(server, {
   },
 });
 
-require('./sockets/socketHandler')(io);
+import('./sockets/socketHandler.js').then(module => module.default(io));
 
 // Rutas
 app.use(mensajeRoutes(io));

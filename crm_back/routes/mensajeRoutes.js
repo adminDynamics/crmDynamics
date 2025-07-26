@@ -1,9 +1,9 @@
-const express = require('express');
-const {
+import express from 'express';
+import {
   recibirMensaje,
   obtenerUltimoMensaje,
   insertarMensajeManual
-} = require('../controllers/mensajeController');
+} from '../controllers/mensajeController.js';
 
 function mensajeRoutes(io) {
   const router = express.Router();
@@ -15,4 +15,4 @@ function mensajeRoutes(io) {
   return router;
 }
 
-module.exports = mensajeRoutes;
+export default mensajeRoutes;

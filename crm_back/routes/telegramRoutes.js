@@ -1,8 +1,8 @@
-const express = require('express');
-const { responderTelegram } = require('../controllers/telegramController');
+import express from 'express';
+import { responderTelegram } from '../controllers/telegramController.js';
 
 const router = express.Router();
 
 router.post('/api/responderTelegram', responderTelegram);
 
-module.exports = router;
+export default router;

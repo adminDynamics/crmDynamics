@@ -1,5 +1,5 @@
-const { Client } = require('@botpress/client');
-const dotenv = require('dotenv');
+import { Client } from '@botpress/client';
+import dotenv from 'dotenv';
 
 dotenv.config();
 
@@ -9,4 +9,4 @@ const client = new Client({
   workspaceId: 'wkspace_01J7H0V7Y417AWH4ZXQZZ9P7HJ'
 });
 
-module.exports = client;
+export default client;

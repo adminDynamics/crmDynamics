@@ -1,8 +1,8 @@
-const supabase = require('../config/supabaseClient.js');
-const { exportarCSV } = require('./jsonToCsv.js');
+import supabase from '../config/supabaseClient.js';
+import { exportarCSV } from './jsonToCsv.js';
 
 // Obtener datos desde Supabase
-const obtenerUsuariosRecientes = async () => {
+export const obtenerUsuariosRecientes = async () => {
   const hoy = new Date();
   const ayer = new Date();
   ayer.setDate(hoy.getDate() - 1);
@@ -20,7 +20,7 @@ const obtenerUsuariosRecientes = async () => {
   return data;
 };
 
-module.exports = { obtenerUsuariosRecientes, exportarCSV };
+export { exportarCSV };
 
 
 

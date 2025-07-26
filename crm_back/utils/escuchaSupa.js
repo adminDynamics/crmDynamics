@@ -1,5 +1,5 @@
-const supabase = require('../config/supabaseClient.js');
-const { insertarCliente, actualizarCliente } = require('../controllers/userTableController.js');
+import supabase from '../config/supabaseClient.js';
+import { insertarCliente, actualizarCliente } from '../controllers/userTableController.js';
 
 const channel = supabase
   .channel('users-changes')

@@ -1,6 +1,6 @@
 const telegramToken = process.env.TELEGRAM_BOT_TOKEN;
 
-const responderTelegram = async (req, res) => {
+export const responderTelegram = async (req, res) => {
   const { chatId, mensaje } = req.body;
 
   if (!chatId || !mensaje) {
@@ -26,5 +26,3 @@ const responderTelegram = async (req, res) => {
     return res.status(500).json({ success: false, error: error.message });
   }
 };
-
-module.exports = { responderTelegram };

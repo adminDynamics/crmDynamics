@@ -1,9 +1,9 @@
-const supabase = require('../config/supabaseClient');
-const limpiarConversationId = require('../utils/limpiarConversationId');
+import supabase from '../config/supabaseClient.js';
+import limpiarConversationId from '../utils/limpiarConversationId.js';
 
 let ultimoMensaje = null;
 
-const recibirMensaje = (io) => async (req, res) => {
+export const recibirMensaje = (io) => async (req, res) => {
   let { tipo, mensaje, userId, conversationId, chatId, timestamp } = req.body;
 
   if (!tipo || !mensaje || !userId || !chatId) {
@@ -38,7 +38,7 @@ const recibirMensaje = (io) => async (req, res) => {
   res.status(200).json({ success: true, message: 'Mensaje procesado correctamente' });
 };
 
-const obtenerUltimoMensaje = async (req, res) => {
+export const obtenerUltimoMensaje = async (req, res) => {
   if (ultimoMensaje) {
     return res.status(200).json(ultimoMensaje);
   } else {
@@ -63,7 +63,7 @@ const obtenerUltimoMensaje = async (req, res) => {
   }
 };
 
-const insertarMensajeManual = async (req, res) => {
+export const insertarMensajeManual = async (req, res) => {
   const { conversation_id, message, timestamp, user_id, chat_id } = req.body;
 
   if (!conversation_id || !message || !timestamp || !user_id || !chat_id) {
@@ -79,10 +79,4 @@ const insertarMensajeManual = async (req, res) => {
   }
 
   res.status(201).json({ success: true, mensajeInsertado: data[0] });
-};
-
-module.exports = {
-  recibirMensaje,
-  obtenerUltimoMensaje,
-  insertarMensajeManual,
 };
