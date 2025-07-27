@@ -19,37 +19,48 @@ export async function insertarCliente(newClient) {
 }  
 
 export async function actualizarCliente(clienteId, nuevosDatos) {
+  try {
+    console.log('🛠️ Iniciando actualización en Botpress para:', clienteId);
 
-  //Buscamos en botpress el registro correspondiente al telegram_id.
-  const { records } = await clientbp.listTableRecords({
-    table: 'UserTable',
-    query: {
-      filters: [{ column: 'telegram_id', operator: 'equals', value: clienteId.toString() }]
-    }
-  });
-  //obtenemos el id de ese registro especifico.
-  const recordId = records[0].id;
-  //Preparamos el nuevo contenido de la fila.
-  const updateRow = {
-    id: recordId,
-    bot_activo:
-      typeof nuevosDatos.bot_activo === 'boolean'
-      ? nuevosDatos.bot_activo         // si es booleano → usalo
-      : nuevosDatos.bot_activo // si no → dejá el valor actual
-    //created_at: nuevosDatos.created_at || actual.created_at       
-  };
-  //Actualizamos la tabla de botpress.
-  const { rows, errors, warnings } = await clientbp.updateTableRows({
-    table: 'UserTable',
-    rows: [
-      {
-        id: updateRow.id,
-        bot_activo: updateRow.bot_activo,
+     //Buscamos en botpress el registro correspondiente al telegram_id.
+    const { records } = await clientbp.listTableRecords({
+      table: 'UserTable',
+      query: {
+        filters: [{ column: 'telegram_id', operator: 'equals', value: clienteId.toString() }]
       }
-    ]
-  });
+    });
 
+    if (!records || records.length === 0) {
+      console.warn(`⚠️ No se encontró el usuario con telegram_id ${clienteId} en Botpress.`);
+      return;
+    }
+    //obtenemos el id de ese registro especifico.
+    const recordId = records[0].id;
+
+
+    //Preparamos el nuevo contenido de la fila.
+    const updateRow = {
+      id: recordId,
+      bot_activo: typeof nuevosDatos.bot_activo === 'boolean'
+        ? nuevosDatos.bot_activo
+        : false
+    };
+
+    //Actualizamos la tabla de botpress.
+    const { rows, errors, warnings } = await clientbp.updateTableRows({
+      table: 'UserTable',
+      rows: [updateRow]
+    });
+
+    if (errors?.length) console.error('❌ Errores al actualizar en Botpress:', errors);
+    if (warnings?.length) console.warn('⚠️ Advertencias al actualizar en Botpress:', warnings);
+    console.log('✅ Botpress actualizado con éxito:', rows);
+
+  } catch (error) {
+    console.error('❌ Error inesperado en actualizarCliente:', error.message);
+  }
 }
+
 
 // ⛔ Subir archivo CSV a Botpress
 export async function subirArchivoABotpress(filePath) {
