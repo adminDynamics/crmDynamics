@@ -22,8 +22,8 @@ export async function actualizarCliente(clienteId, nuevosDatos) {
   try {
     console.log('🛠️ Iniciando actualización en Botpress para:', clienteId);
 
-    // Buscamos en botpress el registro correspondiente al telegram_id.
-    const { rows, limit, offset, count } = await client.findTableRows({
+    // Buscar el registro en la tabla de Botpress por telegram_id
+    const { rows } = await clientbp.findTableRows({
       table: 'UserTable',
       filter: {
         telegram_id: clienteId.toString()
@@ -35,12 +35,14 @@ export async function actualizarCliente(clienteId, nuevosDatos) {
       return;
     }
 
-    // ✅ Mover esto afuera del if
-    const recordId = rows[0].id;
+    // Obtenemos el ID real de la tabla de Botpress
+    const botpressId = rows[0].id;
 
-    // Preparamos el nuevo contenido de la fila.
+    console.log('🧾 ID de Botpress encontrado:', botpressId);
+
+    // Preparamos la fila con el ID correcto
     const updateRow = {
-      id: recordId,
+      id: botpressId,
       bot_activo: typeof nuevosDatos.bot_activo === 'boolean'
         ? nuevosDatos.bot_activo
         : false,
@@ -60,6 +62,7 @@ export async function actualizarCliente(clienteId, nuevosDatos) {
     console.error('❌ Error inesperado en actualizarCliente:', error.message);
   }
 }
+
 
 
 
