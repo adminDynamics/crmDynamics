@@ -2,7 +2,6 @@ import supabase from '../config/supabaseClient.js';
 import clientbp from '../config/bpClient.js';
 import { obtenerUsuariosRecientes, exportarCSV } from '../utils/traeUsuariosRecientes.js';
 import fs from 'fs';
-import fetch from 'node-fetch';
 import FormData from 'form-data';
 
 export async function insertarCliente(newClient) {
