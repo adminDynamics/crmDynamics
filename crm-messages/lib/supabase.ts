@@ -35,7 +35,7 @@ export async function loadHistoricalMessages(): Promise<SupabaseMessage[]> {
 }
 
 export async function saveMessage(message: {
-  id: string
+  id?: string // Hacer opcional para permitir que Supabase genere el ID
   mensaje: string
   tipo: "cliente" | "bot"
   formato: "texto" | "audio" | "imagen" | "documento" | "archivo"
@@ -43,10 +43,9 @@ export async function saveMessage(message: {
   conversation_id: string
   chat_id?: string
   timestamp: string
-}): Promise<boolean> {
+}): Promise<{ success: boolean; id?: string }> {
   try {
-    const { error } = await supabase.from("messages").insert([{
-      id: message.id,
+    const insertData: any = {
       message: message.mensaje,
       tipo: message.tipo,
       formato: message.formato,
@@ -54,17 +53,24 @@ export async function saveMessage(message: {
       conversation_id: message.conversation_id,
       chat_id: message.chat_id,
       timestamp: message.timestamp,
-    }])
+    }
+
+    // Solo incluir ID si se proporciona
+    if (message.id) {
+      insertData.id = message.id
+    }
+
+    const { data, error } = await supabase.from("messages").insert([insertData]).select('id')
 
     if (error) {
       console.error("❌ Error guardando mensaje:", error)
-      return false
+      return { success: false }
     }
 
-    return true
+    return { success: true, id: data?.[0]?.id }
   } catch (error) {
     console.error("❌ Error guardando en Supabase:", error)
-    return false
+    return { success: false }
   }
 }
 

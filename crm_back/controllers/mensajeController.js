@@ -96,7 +96,7 @@ export const insertarMensajeManual = async (req, res) => {
   }
 
   const { data, error } = await supabase
-    .from('mensajes')
+    .from('messages')
     .insert([{ conversation_id, message, timestamp, user_id, chat_id }]);
 
   if (error) {

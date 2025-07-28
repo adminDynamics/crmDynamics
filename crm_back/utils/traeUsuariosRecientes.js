@@ -11,7 +11,7 @@ export const obtenerUsuariosRecientes = async () => {
   const hasta = hoy.toISOString().slice(0, 10);
 
   const { data, error } = await supabase
-    .from('usuarios')
+    .from('users')
     .select('*')
     .gte('created_at', `${desde}T00:00:00`)
     .lte('created_at', `${hasta}T23:59:59`);
