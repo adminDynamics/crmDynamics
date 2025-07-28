@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { useSocket } from "@/hooks/use-socket"
+import { MessageContent } from "@/components/message-content"
 
 interface ChatPanelProps {
   conversationId: string | null
@@ -194,11 +195,18 @@ export function ChatPanel({ conversationId, onBack }: ChatPanelProps) {
                   id: m.id,
                   mensaje: m.mensaje,
                   tipo: m.tipo,
+                  formato: m.formato,
                   timestamp: m.timestamp,
                 })),
               })}
               {conversation.messages.map((msg, index) => {
-                console.log("🔍 Renderizando mensaje:", msg)
+                console.log("🔍 Renderizando mensaje:", {
+                  id: msg.id,
+                  mensaje: msg.mensaje,
+                  tipo: msg.tipo,
+                  formato: msg.formato,
+                  timestamp: msg.timestamp,
+                })
                 return (
                   <div key={msg.id} className={`flex ${msg.tipo === "cliente" ? "justify-start" : "justify-end"}`}>
                     <div
@@ -208,7 +216,7 @@ export function ChatPanel({ conversationId, onBack }: ChatPanelProps) {
                           : "bg-purple-600 text-white"
                       }`}
                     >
-                      <p className="text-sm leading-relaxed">{msg.mensaje || "Mensaje vacío"}</p>
+                      <MessageContent mensaje={msg.mensaje} formato={msg.formato} />
                       <div
                         className={`flex items-center justify-between mt-2 text-xs ${
                           msg.tipo === "cliente" ? "text-gray-500" : "text-purple-200"

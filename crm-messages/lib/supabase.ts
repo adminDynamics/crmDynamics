@@ -8,16 +8,9 @@ const supabaseKey =
 
 export const supabase = createClient(supabaseUrl, supabaseKey)
 
-export interface SupabaseMessage {
-  id: string
-  message: string // Cambiar de "mensaje" a "message"
-  tipo: "cliente" | "bot"
-  user_id: string
-  conversation_id: string
-  chat_id: string
-  timestamp: string
-  created_at?: string // Opcional ya que no está en la tabla
-}
+import type { SupabaseMessage } from "@/types/messages"
+
+export { type SupabaseMessage }
 
 export async function loadHistoricalMessages(): Promise<SupabaseMessage[]> {
   try {
@@ -25,7 +18,7 @@ export async function loadHistoricalMessages(): Promise<SupabaseMessage[]> {
 
     const { data, error } = await supabase
       .from("messages")
-      .select("id, conversation_id, message, timestamp, tipo, user_id, chat_id")
+      .select("id, conversation_id, message, timestamp, tipo, formato, user_id, chat_id")
       .order("timestamp", { ascending: true })
 
     if (error) {
@@ -43,25 +36,25 @@ export async function loadHistoricalMessages(): Promise<SupabaseMessage[]> {
 
 export async function saveMessage(message: {
   id: string
-  mensaje: string // Recibe "mensaje" del código interno
+  mensaje: string
   tipo: "cliente" | "bot"
+  formato: "texto" | "audio" | "imagen" | "documento" | "archivo"
   user_id: string
   conversation_id: string
   chat_id?: string
   timestamp: string
 }): Promise<boolean> {
   try {
-    const { error } = await supabase.from("messages").insert([
-      {
-        id: message.id,
-        message: message.mensaje, // Mapear "mensaje" a "message" para la DB
-        tipo: message.tipo,
-        user_id: message.user_id,
-        conversation_id: message.conversation_id,
-        chat_id: message.chat_id,
-        timestamp: message.timestamp,
-      },
-    ])
+    const { error } = await supabase.from("messages").insert([{
+      id: message.id,
+      message: message.mensaje,
+      tipo: message.tipo,
+      formato: message.formato,
+      user_id: message.user_id,
+      conversation_id: message.conversation_id,
+      chat_id: message.chat_id,
+      timestamp: message.timestamp,
+    }])
 
     if (error) {
       console.error("❌ Error guardando mensaje:", error)

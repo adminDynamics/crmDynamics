@@ -2,27 +2,9 @@
 
 import { useEffect, useState, useCallback } from "react"
 import { io, type Socket } from "socket.io-client"
-import { loadHistoricalMessages, saveMessage, type SupabaseMessage } from "@/lib/supabase"
-
-interface Message {
-  id: string
-  mensaje: string
-  tipo: "cliente" | "bot"
-  userId: string
-  conversationId: string
-  chatId?: string
-  timestamp: Date
-}
-
-interface Conversation {
-  conversationId: string
-  userId: string
-  chatId?: string
-  messages: Message[]
-  lastMessage: string
-  lastMessageTime: Date
-  unreadCount: number
-}
+import { loadHistoricalMessages, saveMessage } from "@/lib/supabase"
+import { detectMessageFormat } from "@/lib/utils"
+import type { Message, Conversation, SupabaseMessage } from "@/types/messages"
 
 export function useSocket() {
   const [socket, setSocket] = useState<Socket | null>(null)
@@ -98,6 +80,7 @@ export function useSocket() {
           id: msg.id,
           mensaje: msg.message, // Cambiar de msg.mensaje a msg.message
           tipo: msg.tipo,
+          formato: msg.formato || detectMessageFormat(msg.message), // Detectar formato automáticamente si no está definido
           userId: msg.user_id,
           conversationId: msg.conversation_id,
           chatId: msg.chat_id,
@@ -159,6 +142,7 @@ export function useSocket() {
           id: `msg_${Date.now()}_${Math.random()}`,
           mensaje: data.message.trim(),
           tipo: data.tipo || "cliente",
+          formato: data.formato || detectMessageFormat(data.message.trim()),
           userId: data.user_id || "Usuario",
           conversationId: data.conversation_id || `conv_${data.user_id}`,
           chatId: data.chat_id,
@@ -193,6 +177,7 @@ export function useSocket() {
             id: newMessage.id,
             mensaje: newMessage.mensaje,
             tipo: newMessage.tipo,
+            formato: newMessage.formato,
             user_id: newMessage.userId,
             conversation_id: newMessage.conversationId,
             chat_id: newMessage.chatId,
@@ -230,6 +215,7 @@ export function useSocket() {
             id: `msg_${Date.now()}_${Math.random()}`,
             mensaje: mensaje,
             tipo: "bot",
+            formato: "texto", // Los mensajes del bot son siempre texto por ahora
             userId: userId,
             conversationId: conversationId,
             chatId: chatId,
@@ -241,6 +227,7 @@ export function useSocket() {
             id: localMessage.id,
             mensaje: localMessage.mensaje,
             tipo: localMessage.tipo,
+            formato: localMessage.formato,
             user_id: localMessage.userId,
             conversation_id: localMessage.conversationId,
             chat_id: localMessage.chatId,
