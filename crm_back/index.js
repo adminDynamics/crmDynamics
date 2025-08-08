@@ -30,6 +30,39 @@ cron.schedule('0 2 * * *', async () => {
 app.use(express.json());
 app.use(cors());
 
+// Middleware de observabilidad de requests entrantes
+app.use((req, res, next) => {
+  const startedAt = Date.now();
+  const requestId =
+    req.headers['x-request-id'] ||
+    req.headers['x-correlation-id'] ||
+    `${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
+  const eventId = req.headers['x-bp-event-id'] || req.headers['x-event-id'] || null;
+  const bodyPreview =
+    req.method !== 'GET' && req.body
+      ? JSON.stringify(req.body).slice(0, 300)
+      : null;
+
+  console.log('➡️  [REQ]', {
+    requestId,
+    method: req.method,
+    url: req.originalUrl,
+    eventId,
+    bodyPreview,
+  });
+
+  res.on('finish', () => {
+    console.log('⬅️  [RES]', {
+      requestId,
+      method: req.method,
+      url: req.originalUrl,
+      status: res.statusCode,
+      durationMs: Date.now() - startedAt,
+    });
+  });
+  next();
+});
+
 const server = http.createServer(app);
 const io = new Server(server, {
   cors: {
