@@ -49,14 +49,18 @@ Se ha implementado un sistema completo para manejar múltiples formatos de mensa
 ### 2. Audio
 - **Extensiones**: .oga, .mp3, .wav
 - **Renderizado**: 
-  - Reproductor de audio nativo del navegador
+  - Reproductor de audio personalizado estilo WhatsApp
+  - Barra de progreso con controles de tiempo
+  - Control de volumen
+  - Botones de play/pause
   - Botón de descarga
 - **Badge**: Icono de play + "Audio"
 
 ### 3. Imagen
 - **Extensiones**: .jpg, .jpeg, .png, .webp, .gif, .svg
 - **Renderizado**:
-  - Imagen con hover effect
+  - Imagen mostrada directamente en el chat
+  - Overlay con botones al hacer hover (Ampliar/Descargar)
   - Click para abrir en nueva pestaña
   - Fallback si la imagen no carga
 - **Badge**: Icono de imagen + "Imagen"
@@ -64,14 +68,16 @@ Se ha implementado un sistema completo para manejar múltiples formatos de mensa
 ### 4. Documento
 - **Extensiones**: .pdf, .doc, .docx, .xls, .xlsx, .ppt, .pptx, .txt, .rtf
 - **Renderizado**:
-  - URL del documento
+  - Tarjeta con icono y nombre del archivo
+  - Botón para abrir en nueva pestaña
   - Botón de descarga
 - **Badge**: Icono de documento + "Documento"
 
 ### 5. Archivo
 - **Descripción**: Cualquier otro tipo de archivo
 - **Renderizado**:
-  - URL del archivo
+  - Tarjeta con icono y nombre del archivo
+  - Botón para abrir en nueva pestaña
   - Botón de descarga
 - **Badge**: Icono de archivo + "Archivo"
 
@@ -97,11 +103,12 @@ Los mensajes nuevos incluyen el campo `formato` que se emite por WebSocket y se 
 
 1. `types/messages.ts` - Nuevo archivo de tipos
 2. `hooks/use-socket.ts` - Actualizado para manejar formato
-3. `components/message-content.tsx` - Nuevo componente
-4. `components/chat-panel.tsx` - Actualizado para usar MessageContent
-5. `lib/supabase.ts` - Actualizado para usar tipos centralizados
-6. `lib/utils.ts` - Agregada función de detección de formato
-7. `app/test-formats/page.tsx` - Nueva página de prueba
+3. `components/message-content.tsx` - Componente mejorado para renderizar contenido
+4. `components/audio-player.tsx` - Nuevo reproductor de audio personalizado
+5. `components/chat-panel.tsx` - Actualizado para usar MessageContent
+6. `lib/supabase.ts` - Actualizado para usar tipos centralizados
+7. `lib/utils.ts` - Agregada función de detección de formato
+8. `app/test-formats/page.tsx` - Página de prueba con ejemplos reales
 
 ## Compatibilidad
 

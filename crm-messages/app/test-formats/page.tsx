@@ -5,34 +5,34 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 
 const testMessages = [
   {
-    mensaje: "Hola, este es un mensaje de texto normal",
+    mensaje: "Hola, este es un mensaje de texto normal con múltiples líneas.\n\nPuede contener saltos de línea y formato básico.",
     formato: "texto" as const,
     descripcion: "Mensaje de texto plano"
   },
   {
-    mensaje: "https://example.com/audio.oga",
+    mensaje: "https://www.soundjay.com/misc/sounds/bell-ringing-05.wav",
     formato: "audio" as const,
-    descripcion: "Archivo de audio OGA"
-  },
-  {
-    mensaje: "https://example.com/image.jpg",
-    formato: "imagen" as const,
-    descripcion: "Imagen JPG"
-  },
-  {
-    mensaje: "https://example.com/document.pdf",
-    formato: "documento" as const,
-    descripcion: "Documento PDF"
-  },
-  {
-    mensaje: "https://example.com/file.zip",
-    formato: "archivo" as const,
-    descripcion: "Archivo ZIP"
+    descripcion: "Archivo de audio WAV real"
   },
   {
     mensaje: "https://picsum.photos/400/300",
     formato: "imagen" as const,
     descripcion: "Imagen real de prueba"
+  },
+  {
+    mensaje: "https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf",
+    formato: "documento" as const,
+    descripcion: "Documento PDF real"
+  },
+  {
+    mensaje: "https://speed.hetzner.de/100MB.bin",
+    formato: "archivo" as const,
+    descripcion: "Archivo binario real"
+  },
+  {
+    mensaje: "https://api.telegram.org/file/bot7454028734:AAGXPus-EyLvDOIPJmFFdDxAAIG-m9HBblA/photos/file_110.jpg",
+    formato: "imagen" as const,
+    descripcion: "Imagen de Telegram (como en tu ejemplo)"
   }
 ]
 
