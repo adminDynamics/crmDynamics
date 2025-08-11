@@ -1,5 +1,5 @@
 export type MessageFormat = "texto" | "audio" | "imagen" | "documento" | "archivo"
-export type MessageType = "cliente" | "bot"
+export type MessageType = "cliente" | "bot" | "encargado"
 
 export interface Message {
   id: string

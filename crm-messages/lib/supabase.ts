@@ -34,46 +34,6 @@ export async function loadHistoricalMessages(): Promise<SupabaseMessage[]> {
   }
 }
 
-export async function saveMessage(message: {
-  id?: string // Hacer opcional para permitir que Supabase genere el ID
-  mensaje: string
-  tipo: "cliente" | "bot"
-  formato: "texto" | "audio" | "imagen" | "documento" | "archivo"
-  user_id: string
-  conversation_id: string
-  chat_id?: string
-  timestamp: string
-}): Promise<{ success: boolean; id?: string }> {
-  try {
-    const insertData: any = {
-      message: message.mensaje,
-      tipo: message.tipo,
-      formato: message.formato,
-      user_id: message.user_id,
-      conversation_id: message.conversation_id,
-      chat_id: message.chat_id,
-      timestamp: message.timestamp,
-    }
-
-    // Solo incluir ID si se proporciona
-    if (message.id) {
-      insertData.id = message.id
-    }
-
-    const { data, error } = await supabase.from("messages").insert([insertData]).select('id')
-
-    if (error) {
-      console.error("❌ Error guardando mensaje:", error)
-      return { success: false }
-    }
-
-    return { success: true, id: data?.[0]?.id }
-  } catch (error) {
-    console.error("❌ Error guardando en Supabase:", error)
-    return { success: false }
-  }
-}
-
 export async function setBotActivoTrueByTelegramId(telegram_id: string): Promise<boolean> {
   try {
     const { error } = await supabase

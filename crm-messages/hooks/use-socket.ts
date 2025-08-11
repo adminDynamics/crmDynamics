@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback } from "react"
 import { io, type Socket } from "socket.io-client"
-import { loadHistoricalMessages, saveMessage } from "@/lib/supabase"
+import { loadHistoricalMessages } from "@/lib/supabase"
 import { detectMessageFormat, generateTempId } from "@/lib/utils"
 import type { Message, Conversation, SupabaseMessage } from "@/types/messages"
 
@@ -171,29 +171,6 @@ export function useSocket() {
           }
 
           console.log(`✅ Agregando mensaje a conversación ${newMessage.conversationId}`)
-
-          // Guardar en Supabase de forma asíncrona
-          saveMessage({
-            mensaje: newMessage.mensaje,
-            tipo: newMessage.tipo,
-            formato: newMessage.formato,
-            user_id: newMessage.userId,
-            conversation_id: newMessage.conversationId,
-            chat_id: newMessage.chatId,
-            timestamp: newMessage.timestamp.toISOString(),
-          }).then((result) => {
-            if (result.success && result.id) {
-              // Actualizar el ID del mensaje con el generado por Supabase
-              setMessages((prevMessages) => 
-                prevMessages.map(msg => 
-                  msg.id === newMessage.id ? { ...msg, id: result.id! } : msg
-                )
-              )
-            }
-          }).catch((error) => {
-            console.error("❌ Error guardando mensaje en Supabase:", error)
-          })
-
           return [...prevMessages, newMessage]
         })
       } catch (error) {
@@ -222,7 +199,7 @@ export function useSocket() {
           const localMessage: Message = {
             id: generateTempId(), // ID temporal hasta que Supabase genere el real
             mensaje: mensaje,
-            tipo: "bot",
+            tipo: "encargado",
             formato: "texto", // Los mensajes del bot son siempre texto por ahora
             userId: userId,
             conversationId: conversationId,
@@ -230,20 +207,18 @@ export function useSocket() {
             timestamp: new Date(),
           }
 
-          // Guardar en Supabase
-          const saveResult = await saveMessage({
-            mensaje: localMessage.mensaje,
-            tipo: localMessage.tipo,
-            formato: localMessage.formato,
+          // Emitir al backend vía WebSocket con el mismo formato que se reciben
+          const socketPayload = {
+            tipo: "encargado",
+            formato: "texto",
+            message: localMessage.mensaje,
             user_id: localMessage.userId,
             conversation_id: localMessage.conversationId,
             chat_id: localMessage.chatId,
             timestamp: localMessage.timestamp.toISOString(),
-          })
-
-          if (saveResult.success && saveResult.id) {
-            // Actualizar el ID del mensaje con el generado por Supabase
-            localMessage.id = saveResult.id
+          }
+          if (socket && socket.connected) {
+            socket.emit("mensaje", socketPayload)
           }
 
           // Agregar al estado (se unificará automáticamente con la conversación existente)
@@ -257,7 +232,7 @@ export function useSocket() {
         return { success: false, error: "Error de conexión" }
       }
     },
-    [],
+    [socket],
   )
 
   const getConversation = useCallback(
