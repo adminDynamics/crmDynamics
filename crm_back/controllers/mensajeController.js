@@ -32,8 +32,26 @@ function getRequestId(req) {
   );
 }
 
+// Cache de claves procesadas para evitar duplicados de emisión/insert en una ventana corta
+const processedKeys = new Map(); // dedupeKey -> lastProcessedAt
+const PROCESSED_TTL_MS = 30_000; // 30s
+
+function cleanupProcessed() {
+  const now = Date.now();
+  for (const [key, lastAt] of processedKeys.entries()) {
+    if (now - lastAt > PROCESSED_TTL_MS) processedKeys.delete(key);
+  }
+}
+
 export const recibirMensaje = (io) => async (req, res) => {
-  let { tipo, mensaje, userId, conversationId, chatId, timestamp, formato, messageId } = req.body;
+  const body = req.body || {};
+  // Normalización: aceptar payloads de Botpress (camelCase) y CRM (snake_case)
+  let tipo = body.tipo;
+  let mensaje = body.mensaje ?? body.message;
+  let userId = body.userId ?? body.user_id;
+  let conversationId = body.conversationId ?? body.conversation_id;
+  let chatId = body.chatId ?? body.chat_id;
+  let { timestamp, formato, messageId } = body;
 
   const requestId = getRequestId(req);
   const eventId = req.headers['x-bp-event-id'] || req.headers['x-event-id'] || null;
@@ -99,9 +117,23 @@ export const recibirMensaje = (io) => async (req, res) => {
     },
   });
 
-  ultimoMensaje = nuevoMensaje;
-  console.log('📡 Enviando mensaje por WebSocket:', JSON.stringify(nuevoMensaje, null, 2));
-  io.emit('mensaje', nuevoMensaje);
+  // Evitar duplicados procesados recientemente (antes de DB/WS)
+  const alreadyProcessedAt = processedKeys.get(dedupeKey);
+  if (alreadyProcessedAt && now - alreadyProcessedAt < PROCESSED_TTL_MS) {
+    console.warn('⚠️ Duplicado detectado, se omite insert/WS', { requestId, dedupeKey, ageMs: now - alreadyProcessedAt });
+    return res.status(200).json({
+      success: true,
+      message: 'Duplicado reciente ignorado',
+      meta: {
+        requestId,
+        eventId,
+        messageId: messageId || null,
+        dedupeKey,
+        duplicate: true,
+        occurrencesInLastMinute: recentRequests.get(dedupeKey)?.count || 1,
+      }
+    });
+  }
 
   try {
     console.log('📝 [DB] Insert intento -> messages', { requestId, dedupeKey });
@@ -111,24 +143,45 @@ export const recibirMensaje = (io) => async (req, res) => {
       .select('id, timestamp, chat_id');
     if (error) {
       console.error('❌ [DB] Insert error -> messages', { requestId, dedupeKey, error: error.message });
-    } else {
-      console.log('✅ [DB] Insert ok -> messages', { requestId, dedupeKey, inserted: data });
+      return res.status(500).json({
+        success: false,
+        message: 'Error al guardar el mensaje',
+        error: error.message,
+        meta: { requestId, dedupeKey }
+      });
     }
+
+    // Marcamos como procesado y emitimos por WebSocket SOLO tras insert exitoso
+    processedKeys.set(dedupeKey, Date.now());
+    cleanupProcessed();
+
+    ultimoMensaje = nuevoMensaje;
+    console.log('📡 [WS] Emisión -> mensaje', JSON.stringify(nuevoMensaje, null, 2));
+    io.emit('mensaje', nuevoMensaje);
+
+    console.log('✅ [DB] Insert ok -> messages', { requestId, dedupeKey, inserted: data });
+
+    return res.status(200).json({
+      success: true,
+      message: 'Mensaje procesado correctamente',
+      meta: {
+        requestId,
+        eventId,
+        messageId: messageId || null,
+        dedupeKey,
+        duplicate: false,
+        occurrencesInLastMinute: recentRequests.get(dedupeKey)?.count || 1,
+      }
+    });
   } catch (err) {
     console.error('❌ [DB] Excepción al guardar en Supabase:', { requestId, dedupeKey, error: err.message || err });
+    return res.status(500).json({
+      success: false,
+      message: 'Excepción al guardar en Supabase',
+      error: err.message || String(err),
+      meta: { requestId, dedupeKey }
+    });
   }
-
-  res.status(200).json({
-    success: true,
-    message: 'Mensaje procesado correctamente',
-    meta: {
-      requestId,
-      eventId,
-      messageId: messageId || null,
-      dedupeKey,
-      occurrencesInLastMinute: recentRequests.get(dedupeKey)?.count || 1,
-    }
-  });
 };
 
 
