@@ -2,12 +2,13 @@
 
 import type React from "react"
 import { useState, useEffect, useRef } from "react"
-import { Send, ArrowLeft, Hash, Phone, Video, MoreHorizontal } from "lucide-react"
+import { Send, ArrowLeft, Hash, Phone, Video, MoreHorizontal, Brain } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { useSocket } from "@/hooks/use-socket"
 import { MessageContent } from "@/components/message-content"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 
 interface ChatPanelProps {
   conversationId: string | null
@@ -17,6 +18,8 @@ interface ChatPanelProps {
 export function ChatPanel({ conversationId, onBack }: ChatPanelProps) {
   const [message, setMessage] = useState("")
   const [sending, setSending] = useState(false)
+  const [summarizing, setSummarizing] = useState(false)
+  const [summary, setSummary] = useState<string | null>(null)
   const messagesEndRef = useRef<HTMLDivElement>(null)
 
   const { getConversation, sendTelegramMessage, isConnected, conversations, messages } = useSocket()
@@ -48,6 +51,37 @@ export function ChatPanel({ conversationId, onBack }: ChatPanelProps) {
       hour: "2-digit",
       minute: "2-digit",
     })
+  }
+
+  const handleSummarize = async () => {
+    if (!conversation) return
+    setSummarizing(true)
+    setSummary(null)
+    try {
+      const payload = conversation.messages.map((m) => ({
+        author: m.tipo === "cliente" ? "cliente" : "agente",
+        content: m.mensaje,
+        timestamp: m.timestamp.toISOString(),
+      }))
+
+      const res = await fetch("/api/summarize", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ messages: payload, language: "es-AR" }),
+      })
+
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}))
+        throw new Error(err.error || "Error generando resumen")
+      }
+
+      const data = await res.json()
+      setSummary(data.summary || "")
+    } catch (e) {
+      setSummary("No se pudo generar el resumen.")
+    } finally {
+      setSummarizing(false)
+    }
   }
 
   const handleSend = async () => {
@@ -164,6 +198,26 @@ export function ChatPanel({ conversationId, onBack }: ChatPanelProps) {
           </div>
 
           <div className="flex gap-2">
+            <Dialog>
+              <DialogTrigger asChild>
+                <Button variant="ghost" size="sm" title="Resumir conversación">
+                  <Brain className="w-5 h-5" />
+                </Button>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Resumen con IA</DialogTitle>
+                </DialogHeader>
+                <div className="space-y-3">
+                  <Button onClick={handleSummarize} disabled={summarizing || !conversation} className="bg-purple-600 hover:bg-purple-700">
+                    {summarizing ? "Resumiendo..." : "Generar resumen"}
+                  </Button>
+                  <div className="text-sm whitespace-pre-wrap max-h-80 overflow-auto border rounded p-3 bg-gray-50">
+                    {summary ? summary : "Sin resumen todavía."}
+                  </div>
+                </div>
+              </DialogContent>
+            </Dialog>
             <Button variant="ghost" size="sm">
               <Phone className="w-5 h-5" />
             </Button>
